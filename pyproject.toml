@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notetaker"
+version = "0.1.0"
+description = "Grava reunioes, transcreve localmente com Whisper e gera resumo via CLI de LLM"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "faster-whisper>=1.0.0",
+]
+
+[project.optional-dependencies]
+# Nivel 2 de diarizacao (identificar cada locutor). Requer bastante CPU.
+diarization = [
+    "whisperx>=3.1.1",
+]
+# Aceleracao por GPU NVIDIA (CUDA). Instala as libs CUDA runtime que o
+# CTranslate2/faster-whisper usa. So faz sentido em maquinas com GPU NVIDIA.
+gpu = [
+    "nvidia-cublas-cu12",
+    "nvidia-cudnn-cu12>=9.0",
+]
+
+[project.scripts]
+notetaker = "notetaker.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["notetaker*"]
