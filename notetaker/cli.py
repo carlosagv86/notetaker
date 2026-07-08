@@ -204,7 +204,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         created_at=datetime.now().isoformat(timespec="seconds"),
         mic_source=devices.mic_source,
         monitor_source=devices.monitor_source,
-        extra={"llm_command": resolve_llm_command(cfg.llm.provider)},
+        extra={"llm_command": resolve_llm_command(cfg.llm.provider, cfg.llm.model)},
     )
 
     try:
@@ -373,7 +373,7 @@ def cmd_summarize(args: argparse.Namespace) -> int:
     out_lang = resolve_output_language(
         args.output_lang or meta.output_lang, meta.detected_lang or meta.lang
     )
-    llm_command = meta.extra.get("llm_command", resolve_llm_command(cfg.llm.provider))
+    llm_command = meta.extra.get("llm_command", resolve_llm_command(cfg.llm.provider, cfg.llm.model))
 
     try:
         md = generate_summary(transcript, llm_command, out_lang, title=meta.title)
@@ -552,13 +552,16 @@ def cmd_setup(args: argparse.Namespace) -> int:
         "LLM Provider", base.llm.provider,
         choices=["kiro", "claude"],
     ).lower()
+    llm_model = _prompt(
+        "LLM model (empty = CLI default)", base.llm.model,
+    )
 
     cfg = Config(
         storage_root=Path(storage).expanduser(),
         audio=type(base.audio)(mic_source=mic_source, monitor_source=monitor_source),
         whisper=type(base.whisper)(model=model, language=language),
         summary=type(base.summary)(language=summary_language),
-        llm=type(base.llm)(provider=llm_provider),
+        llm=type(base.llm)(provider=llm_provider, model=llm_model),
     )
     path = write_config(cfg)
     print(f"\nconfig saved to {path}")

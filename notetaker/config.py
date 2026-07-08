@@ -33,6 +33,8 @@ language = "meeting"
 [llm]
 # LLM Provider used to generate the summary from the transcription (via stdin).
 provider = "kiro"      # kiro | claude
+# Model name passed to the CLI via --model. Empty = use the CLI's default.
+model = ""
 """
 
 
@@ -65,20 +67,27 @@ class InvalidLLMProviderError(ValueError):
     pass
 
 
-def resolve_llm_command(provider: str) -> str:
-    """Maps the LLM Provider (kiro|claude) to the actual CLI command."""
+def resolve_llm_command(provider: str, model: str = "") -> str:
+    """Maps the LLM Provider (kiro|claude) to the actual CLI command.
+
+    When `model` is non-empty, appends --model <name> to the command.
+    """
     try:
-        return LLM_PROVIDER_COMMANDS[provider]
+        cmd = LLM_PROVIDER_COMMANDS[provider]
     except KeyError:
         options = ", ".join(LLM_PROVIDER_COMMANDS)
         raise InvalidLLMProviderError(
             f"Invalid LLM Provider: '{provider}'. Options: {options}."
         ) from None
+    if model:
+        cmd += f" --model {model}"
+    return cmd
 
 
 @dataclass
 class LLMConfig:
     provider: str = "kiro"
+    model: str = ""
 
 
 @dataclass
@@ -146,6 +155,8 @@ language = {_toml_str(cfg.summary.language)}
 [llm]
 # LLM Provider used to generate the summary from the transcription (via stdin).
 provider = {_toml_str(cfg.llm.provider)}      # kiro | claude
+# Model name passed to the CLI via --model. Empty = use the CLI's default.
+model = {_toml_str(cfg.llm.model)}
 """
 
 
@@ -187,5 +198,5 @@ def load_config() -> Config:
         summary=SummaryConfig(
             language=summary.get("language", "meeting"),
         ),
-        llm=LLMConfig(provider=provider),
+        llm=LLMConfig(provider=provider, model=llm_data.get("model", "")),
     )

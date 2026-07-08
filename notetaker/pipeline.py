@@ -11,7 +11,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
 from . import diarize, transcribe
-from .config import resolve_llm_command
+from .config import load_config, resolve_llm_command
 from .prompts import resolve_output_language
 from .storage import Meeting
 from .summarize import generate_summary
@@ -144,9 +144,10 @@ def process_meeting(meeting: Meeting, progress: ProgressCb | None = None) -> Non
 
         report("summarizing", "generating summary with LLM...")
         out_lang = resolve_output_language(meta.output_lang, detected)
+        cfg = load_config()
         md = generate_summary(
             full_text,
-            meta.extra.get("llm_command", resolve_llm_command("kiro")),
+            meta.extra.get("llm_command", resolve_llm_command(cfg.llm.provider, cfg.llm.model)),
             out_lang,
             title=meta.title,
         )
